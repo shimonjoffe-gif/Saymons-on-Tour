@@ -315,7 +315,7 @@ function ExpenseCard({ expense, allExpenses, tripMembers, onDelete, onUpdated }:
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6, gap: 8 }}>
         <button className="btn btn-secondary btn-sm" onClick={() => setExpanded(!expanded)}>
-          {expanded ? 'Скрыть' : 'Детали'}
+          {expanded ? 'Скрыть' : 'Участники'}
         </button>
         <button className="btn btn-secondary btn-sm" onClick={startEdit}>✏️ Изменить</button>
         <button className="btn btn-danger btn-sm" onClick={e => { e.stopPropagation(); onDelete(expense.id); }}>Удалить</button>
@@ -399,6 +399,7 @@ export default function TripPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showMembers, setShowMembers] = useState(true);
 
   const loadTrip = async () => {
     const { data } = await api.get(`/trips/${id}`);
@@ -464,8 +465,13 @@ export default function TripPage() {
 
       {/* Участники */}
       <section className="section">
-        <h2>Участники ({trip.members.length})</h2>
-        <div className="families-grid">
+        <div className="section-header">
+          <h2>Участники ({trip.members.length})</h2>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowMembers(v => !v)}>
+            {showMembers ? 'Свернуть' : 'Развернуть'}
+          </button>
+        </div>
+        {showMembers && <div className="families-grid">
           {Object.entries(familyGroups).map(([familyName, members]) => (
             <div key={familyName} className="family-block">
               <div className="family-name">Семья {familyName}</div>
@@ -501,7 +507,7 @@ export default function TripPage() {
               })}
             </div>
           ))}
-        </div>
+        </div>}
       </section>
 
       {/* Расходы */}
