@@ -65,7 +65,7 @@ function ExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => void }) {
   const [withAlcohol, setWithAlcohol] = useState(false);
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [alcoholSplits, setAlcoholSplits] = useState<SplitRow[]>([]);
-  const [showSplits, setShowSplits] = useState(false);
+  const [showSplits, setShowSplits] = useState(true);
 
   // Пересчитываем splits при смене категории или состава
   useEffect(() => {
