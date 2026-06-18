@@ -63,6 +63,38 @@ router.post('/trips/:tripId/expenses', async (req, res) => {
   res.status(201).json(expense);
 });
 
+// Редактировать расход (сумма + участники)
+router.patch('/expenses/:id', async (req, res) => {
+  const expenseId = Number(req.params.id);
+  const { amount, customSplits } = req.body;
+
+  const updates: any = {};
+  if (amount !== undefined) updates.amount = Number(amount);
+
+  await prisma.expense.update({ where: { id: expenseId }, data: updates });
+
+  if (customSplits && customSplits.length > 0) {
+    const splits = customSplits
+      .filter((s: { userId: number; shareWeight: number }) => s.shareWeight > 0)
+      .map((s: { userId: number; shareWeight: number }) => ({
+        userId: Number(s.userId),
+        shareWeight: Number(s.shareWeight),
+      }));
+
+    await prisma.expenseSplit.deleteMany({ where: { expenseId } });
+    await prisma.expenseSplit.createMany({ data: splits.map((s: any) => ({ ...s, expenseId })) });
+  }
+
+  const updated = await prisma.expense.findUnique({
+    where: { id: expenseId },
+    include: {
+      payer: { include: { family: true } },
+      splits: { include: { user: { include: { family: true } } } },
+    },
+  });
+  res.json(updated);
+});
+
 router.delete('/expenses/:id', async (req, res) => {
   await prisma.expenseSplit.deleteMany({ where: { expenseId: Number(req.params.id) } });
   await prisma.expense.delete({ where: { id: Number(req.params.id) } });

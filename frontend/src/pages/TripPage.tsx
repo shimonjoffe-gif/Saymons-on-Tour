@@ -169,9 +169,64 @@ function ExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => void }) {
 }
 
 // --- Карточка расхода ---
-function ExpenseCard({ expense, onDelete }: { expense: Expense; onDelete: (id: number) => void }) {
+function ExpenseCard({ expense, tripMembers, onDelete, onUpdated }: {
+  expense: Expense;
+  tripMembers: Trip['members'];
+  onDelete: (id: number) => void;
+  onUpdated: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [amount, setAmount] = useState(String(expense.amount));
+  const [splits, setSplits] = useState<SplitRow[]>([]);
   const totalWeight = expense.splits.reduce((s, sp) => s + sp.shareWeight, 0);
+
+  const startEdit = () => {
+    // Строим splits из участников выезда, проставляя текущие веса
+    const rows: SplitRow[] = tripMembers.map(m => {
+      const existing = expense.splits.find(s => s.userId === m.userId);
+      return {
+        userId: m.userId,
+        name: `${m.user.family.name} ${m.user.firstName}`,
+        memberType: m.user.memberType,
+        included: !!existing,
+        weight: existing ? existing.shareWeight : defaultWeight(m.user.memberType, expense.category),
+      };
+    });
+    setSplits(rows);
+    setAmount(String(expense.amount));
+    setEditing(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await api.patch(`/expenses/${expense.id}`, {
+      amount: Number(amount),
+      customSplits: splits.filter(s => s.included).map(s => ({ userId: s.userId, shareWeight: s.weight })),
+    });
+    setEditing(false);
+    onUpdated();
+  };
+
+  if (editing) {
+    return (
+      <form className="card form" onSubmit={handleSave}>
+        <h3>{CATEGORY_EMOJI[expense.category]} {expense.description}</h3>
+        <div className="form-row">
+          <label>Сумма ₽</label>
+          <input required type="number" min="0" value={amount} onChange={e => setAmount(e.target.value)} />
+        </div>
+        <div className="form-row">
+          <label>Участники</label>
+          <SplitsEditor splits={splits} onChange={setSplits} />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="submit" className="btn btn-primary">Сохранить</button>
+          <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)}>Отмена</button>
+        </div>
+      </form>
+    );
+  }
 
   return (
     <div className="card expense-card">
@@ -185,6 +240,7 @@ function ExpenseCard({ expense, onDelete }: { expense: Expense; onDelete: (id: n
         <button className="btn btn-secondary btn-sm" onClick={() => setExpanded(!expanded)}>
           {expanded ? 'Скрыть' : 'Детали'}
         </button>
+        <button className="btn btn-secondary btn-sm" onClick={startEdit}>✏️ Изменить</button>
         <button className="btn btn-danger btn-sm" onClick={e => { e.stopPropagation(); onDelete(expense.id); }}>Удалить</button>
       </div>
       {expanded && (
@@ -383,7 +439,7 @@ export default function TripPage() {
         <div className="expenses-list">
           {trip.expenses.length === 0 && <p className="empty">Расходов пока нет</p>}
           {trip.expenses.map(expense => (
-            <ExpenseCard key={expense.id} expense={expense} onDelete={deleteExpense} />
+            <ExpenseCard key={expense.id} expense={expense} tripMembers={trip.members} onDelete={deleteExpense} onUpdated={() => { loadTrip(); setSettlement(null); }} />
           ))}
         </div>
       </section>
