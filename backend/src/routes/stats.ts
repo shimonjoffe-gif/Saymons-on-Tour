@@ -6,7 +6,10 @@ const router = Router();
 // Статистика выездов по участникам
 router.get('/trips', async (req, res) => {
   const members = await prisma.tripMember.findMany({
-    where: { attendedMatch: true },
+    where: {
+      attendedMatch: true,
+      trip: { event: { date: { lt: new Date() } } },
+    },
     include: {
       user: { include: { family: true } },
       trip: { include: { event: true } },
