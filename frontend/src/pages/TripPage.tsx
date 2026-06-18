@@ -322,16 +322,23 @@ function ExpenseCard({ expense, allExpenses, tripMembers, onDelete, onUpdated }:
       </div>
       {expanded && (
         <div className="expense-splits">
-          {expense.splits.map(split => {
-            const share = totalWeight > 0 ? (split.shareWeight / totalWeight) * expense.amount : 0;
-            return (
-              <div key={split.id} className="split-row">
-                <span>{split.user.family.name} {split.user.firstName}</span>
-                <span className="split-weight">×{split.shareWeight}</span>
-                <span className="split-amount">{share.toFixed(0)} ₽</span>
+          {Array.from(new Set(expense.splits.map(s => s.user.family.name))).map(family => (
+            <div key={family}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: 1, padding: '6px 2px 2px' }}>
+                Семья {family}
               </div>
-            );
-          })}
+              {expense.splits.filter(s => s.user.family.name === family).map(split => {
+                const share = totalWeight > 0 ? (split.shareWeight / totalWeight) * expense.amount : 0;
+                return (
+                  <div key={split.id} className="split-row">
+                    <span>{split.user.firstName}</span>
+                    <span className="split-weight">×{split.shareWeight}</span>
+                    <span className="split-amount">{share.toFixed(0)} ₽</span>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
     </div>
