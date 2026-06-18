@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Family {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  members   User[]
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  memberType String  @default("ADULT") // ADULT=1.0 | CHILD=0.5 | INFANT=0.0
+  familyId   Int
+  family    Family   @relation(fields: [familyId], references: [id])
+  maxUserId String?  @unique
+
+  tripMembers   TripMember[]
+  paidExpenses  Expense[]
+  expenseSplits ExpenseSplit[]
+
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id          Int    @id @default(autoincrement())
+  sportType   String @default("FOOTBALL")
+  opponent    String
+  date        DateTime
+  city        String
+  venue       String?
+  description String?
+  trip        Trip?
+  createdAt   DateTime  @default(now())
+}
+
+model Trip {
+  id        Int          @id @default(autoincrement())
+  eventId   Int          @unique
+  event     Event        @relation(fields: [eventId], references: [id])
+  members   TripMember[]
+  expenses  Expense[]
+  createdAt DateTime     @default(now())
+}
+
+model TripMember {
+  id            Int     @id @default(autoincrement())
+  tripId        Int
+  userId        Int
+  attendedMatch Boolean @default(true)
+  trip          Trip    @relation(fields: [tripId], references: [id])
+  user          User    @relation(fields: [userId], references: [id])
+
+  @@unique([tripId, userId])
+}
+
+model Expense {
+  id          Int    @id @default(autoincrement())
+  tripId      Int
+  payerId     Int
+  amount      Float
+  description String
+  category    String
+  trip        Trip            @relation(fields: [tripId], references: [id])
+  payer       User            @relation(fields: [payerId], references: [id])
+  splits      ExpenseSplit[]
+  createdAt   DateTime        @default(now())
+}
+
+// shareWeight: взрослый=1.0, ребёнок=0.5 по умолчанию, редактируется вручную
+model ExpenseSplit {
+  id          Int     @id @default(autoincrement())
+  expenseId   Int
+  userId      Int
+  shareWeight Float
+  expense     Expense @relation(fields: [expenseId], references: [id])
+  user        User    @relation(fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type      String   // 'match' | 'tickets'
+  title     String
+  body      String
+  source    String   // 'landscrona33' | 'zenit2fc' | etc.
+  sourceUrl String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model ParserState {
+  id           Int       @id @default(autoincrement())
+  source       String    @unique // 'tg:landscrona33' | 'web:https://...'
+  lastRunAt    DateTime?
+  lastPostId   String?
+  errorMessage String?
+  updatedAt    DateTime  @updatedAt
+}
+
+model ParserSource {
+  id         Int      @id @default(autoincrement())
+  type       String   // 'telegram' | 'website'
+  identifier String   // TG: channel name; web: full URL
+  label      String
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@unique([type, identifier])
+}
