@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "scripts": {
     "build": "cd frontend && npm install && npm run build && cd ../backend && npm install && npm run build && npx prisma generate",
-    "start": "cd backend && npm start",
-    "db:migrate": "cd backend && npx prisma migrate deploy"
+    "start": "cd backend && npx prisma db push --skip-generate && node dist/index.js"
   }
 }
