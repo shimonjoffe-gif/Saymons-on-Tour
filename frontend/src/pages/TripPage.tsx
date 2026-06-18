@@ -466,7 +466,10 @@ export default function TripPage() {
 
   return (
     <div className="page">
-      <Link to="/" className="back-link">← Все выезды</Link>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link to="/" className="back-link">← Все выезды</Link>
+        <Link to="/" className="btn btn-primary btn-sm">Сохранить</Link>
+      </div>
 
       <div className="trip-header">
         <h1>Зенит — {trip.event.opponent}</h1>
@@ -564,7 +567,6 @@ export default function TripPage() {
         </section>
       )}
 
-      <Link to="/" className="btn btn-primary btn-full">← Вернуться в календарь</Link>
     </div>
   );
 }
