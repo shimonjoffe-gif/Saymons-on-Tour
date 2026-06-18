@@ -169,41 +169,89 @@ function ExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => void }) {
 }
 
 // --- Карточка расхода ---
-function ExpenseCard({ expense, tripMembers, onDelete, onUpdated }: {
+function ExpenseCard({ expense, allExpenses, tripMembers, onDelete, onUpdated }: {
   expense: Expense;
+  allExpenses: Expense[];
   tripMembers: Trip['members'];
   onDelete: (id: number) => void;
   onUpdated: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [description, setDescription] = useState(expense.description);
   const [amount, setAmount] = useState(String(expense.amount));
   const [splits, setSplits] = useState<SplitRow[]>([]);
+  const [withAlcohol, setWithAlcohol] = useState(false);
+  const [alcoholAmount, setAlcoholAmount] = useState('');
+  const [alcoholSplits, setAlcoholSplits] = useState<SplitRow[]>([]);
   const totalWeight = expense.splits.reduce((s, sp) => s + sp.shareWeight, 0);
+  const isFood = expense.category === 'FOOD';
 
-  const startEdit = () => {
-    // Строим splits из участников выезда, проставляя текущие веса
-    const rows: SplitRow[] = tripMembers.map(m => {
-      const existing = expense.splits.find(s => s.userId === m.userId);
+  const buildRows = (category: string, existing: Expense['splits']) =>
+    tripMembers.map(m => {
+      const ex = existing.find(s => s.userId === m.userId);
       return {
         userId: m.userId,
         name: `${m.user.family.name} ${m.user.firstName}`,
         memberType: m.user.memberType,
-        included: !!existing,
-        weight: existing ? existing.shareWeight : defaultWeight(m.user.memberType, expense.category),
+        included: !!ex,
+        weight: ex ? ex.shareWeight : defaultWeight(m.user.memberType, category),
       };
     });
-    setSplits(rows);
+
+  const startEdit = () => {
+    const pairedAlco = isFood
+      ? allExpenses.find(e => e.category === 'ALCOHOL' && e.description === expense.description + ' (алко)')
+      : null;
+    setSplits(buildRows(expense.category, expense.splits));
     setAmount(String(expense.amount));
+    setDescription(expense.description);
+    if (pairedAlco) {
+      setWithAlcohol(true);
+      setAlcoholAmount(String(pairedAlco.amount));
+      setAlcoholSplits(buildRows('ALCOHOL', pairedAlco.splits));
+    } else {
+      setWithAlcohol(false);
+      setAlcoholAmount('');
+      setAlcoholSplits(buildRows('ALCOHOL', []));
+    }
     setEditing(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     await api.patch(`/expenses/${expense.id}`, {
+      description,
       amount: Number(amount),
       customSplits: splits.filter(s => s.included).map(s => ({ userId: s.userId, shareWeight: s.weight })),
     });
+
+    if (isFood) {
+      const pairedAlco = allExpenses.find(
+        e => e.category === 'ALCOHOL' && e.description === expense.description + ' (алко)'
+      );
+      if (withAlcohol && Number(alcoholAmount) > 0) {
+        const alcoSplitsData = alcoholSplits.filter(s => s.included).map(s => ({ userId: s.userId, shareWeight: s.weight }));
+        if (pairedAlco) {
+          await api.patch(`/expenses/${pairedAlco.id}`, {
+            description: description + ' (алко)',
+            amount: Number(alcoholAmount),
+            customSplits: alcoSplitsData,
+          });
+        } else {
+          await api.post(`/trips/${expense.tripId}/expenses`, {
+            payerId: expense.payerId,
+            description: description + ' (алко)',
+            category: 'ALCOHOL',
+            amount: Number(alcoholAmount),
+            customSplits: alcoSplitsData,
+          });
+        }
+      } else if (!withAlcohol && pairedAlco) {
+        await api.delete(`/expenses/${pairedAlco.id}`);
+      }
+    }
+
     setEditing(false);
     onUpdated();
   };
@@ -211,13 +259,39 @@ function ExpenseCard({ expense, tripMembers, onDelete, onUpdated }: {
   if (editing) {
     return (
       <form className="card form" onSubmit={handleSave}>
-        <h3>{CATEGORY_EMOJI[expense.category]} {expense.description}</h3>
+        <h3>{CATEGORY_EMOJI[expense.category]} Редактирование</h3>
         <div className="form-row">
-          <label>Сумма ₽</label>
-          <input required type="number" min="0" value={amount} onChange={e => setAmount(e.target.value)} />
+          <label>Описание</label>
+          <input required value={description} onChange={e => setDescription(e.target.value)} />
         </div>
         <div className="form-row">
-          <label>Участники</label>
+          <label>{isFood && withAlcohol ? 'Сумма за еду ₽' : 'Сумма ₽'}</label>
+          <input required type="number" min="0" value={amount} onChange={e => setAmount(e.target.value)} />
+        </div>
+        {isFood && (
+          <label className="toggle" style={{ fontSize: 13 }}>
+            <input type="checkbox" checked={withAlcohol} onChange={e => {
+              setWithAlcohol(e.target.checked);
+              if (e.target.checked && alcoholSplits.length === 0)
+                setAlcoholSplits(buildRows('ALCOHOL', []));
+            }} />
+            Алкоголь отдельной суммой
+          </label>
+        )}
+        {isFood && withAlcohol && (
+          <>
+            <div className="form-row">
+              <label>Сумма за алкоголь ₽</label>
+              <input required type="number" min="0" value={alcoholAmount} onChange={e => setAlcoholAmount(e.target.value)} />
+            </div>
+            <div className="form-row">
+              <label>Участники (алко)</label>
+              <SplitsEditor splits={alcoholSplits} onChange={setAlcoholSplits} />
+            </div>
+          </>
+        )}
+        <div className="form-row">
+          <label>{isFood && withAlcohol ? 'Участники (еда)' : 'Участники'}</label>
           <SplitsEditor splits={splits} onChange={setSplits} />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -439,7 +513,7 @@ export default function TripPage() {
         <div className="expenses-list">
           {trip.expenses.length === 0 && <p className="empty">Расходов пока нет</p>}
           {trip.expenses.map(expense => (
-            <ExpenseCard key={expense.id} expense={expense} tripMembers={trip.members} onDelete={deleteExpense} onUpdated={() => { loadTrip(); setSettlement(null); }} />
+            <ExpenseCard key={expense.id} expense={expense} allExpenses={trip.expenses} tripMembers={trip.members} onDelete={deleteExpense} onUpdated={() => { loadTrip(); setSettlement(null); }} />
           ))}
         </div>
       </section>

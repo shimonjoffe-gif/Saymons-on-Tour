@@ -66,10 +66,11 @@ router.post('/trips/:tripId/expenses', async (req, res) => {
 // Редактировать расход (сумма + участники)
 router.patch('/expenses/:id', async (req, res) => {
   const expenseId = Number(req.params.id);
-  const { amount, customSplits } = req.body;
+  const { amount, description, customSplits } = req.body;
 
   const updates: any = {};
   if (amount !== undefined) updates.amount = Number(amount);
+  if (description !== undefined) updates.description = description;
 
   await prisma.expense.update({ where: { id: expenseId }, data: updates });
 
