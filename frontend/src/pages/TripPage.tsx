@@ -65,6 +65,7 @@ function ExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => void }) {
   const [withAlcohol, setWithAlcohol] = useState(false);
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [alcoholSplits, setAlcoholSplits] = useState<SplitRow[]>([]);
+  const [showSplits, setShowSplits] = useState(false);
 
   // Пересчитываем splits при смене категории или состава
   useEffect(() => {
@@ -153,12 +154,17 @@ function ExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => void }) {
 
       {/* Участники основного расхода */}
       <div className="form-row">
-        <label>{isFood && withAlcohol ? 'Участники (еда)' : 'Участники'}</label>
-        <SplitsEditor splits={splits} onChange={setSplits} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <label style={{ margin: 0 }}>{isFood && withAlcohol ? 'Участники (еда)' : 'Участники'}</label>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowSplits(v => !v)}>
+            {showSplits ? 'Свернуть' : 'Развернуть'}
+          </button>
+        </div>
+        {showSplits && <SplitsEditor splits={splits} onChange={setSplits} />}
       </div>
 
       {/* Участники алкоголя */}
-      {isFood && withAlcohol && (
+      {isFood && withAlcohol && showSplits && (
         <div className="form-row">
           <label>Участники (алко)</label>
           <SplitsEditor splits={alcoholSplits} onChange={setAlcoholSplits} />
@@ -186,6 +192,7 @@ function ExpenseCard({ expense, allExpenses, tripMembers, onDelete, onUpdated }:
   const [withAlcohol, setWithAlcohol] = useState(false);
   const [alcoholAmount, setAlcoholAmount] = useState('');
   const [alcoholSplits, setAlcoholSplits] = useState<SplitRow[]>([]);
+  const [showSplits, setShowSplits] = useState(false);
   const totalWeight = expense.splits.reduce((s, sp) => s + sp.shareWeight, 0);
   const isFood = expense.category === 'FOOD';
 
@@ -287,16 +294,23 @@ function ExpenseCard({ expense, allExpenses, tripMembers, onDelete, onUpdated }:
               <label>Сумма за алкоголь ₽</label>
               <input required type="number" min="0" value={alcoholAmount} onChange={e => setAlcoholAmount(e.target.value)} />
             </div>
-            <div className="form-row">
-              <label>Участники (алко)</label>
-              <SplitsEditor splits={alcoholSplits} onChange={setAlcoholSplits} />
-            </div>
           </>
         )}
         <div className="form-row">
-          <label>{isFood && withAlcohol ? 'Участники (еда)' : 'Участники'}</label>
-          <SplitsEditor splits={splits} onChange={setSplits} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <label style={{ margin: 0 }}>{isFood && withAlcohol ? 'Участники (еда)' : 'Участники'}</label>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowSplits(v => !v)}>
+              {showSplits ? 'Свернуть' : 'Развернуть'}
+            </button>
+          </div>
+          {showSplits && <SplitsEditor splits={splits} onChange={setSplits} />}
         </div>
+        {isFood && withAlcohol && showSplits && (
+          <div className="form-row">
+            <label>Участники (алко)</label>
+            <SplitsEditor splits={alcoholSplits} onChange={setAlcoholSplits} />
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 8 }}>
           <button type="submit" className="btn btn-primary">Сохранить</button>
           <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)}>Отмена</button>
