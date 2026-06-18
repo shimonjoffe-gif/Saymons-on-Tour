@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#003DA5"/>
+
+  <!-- Football white base -->
+  <circle cx="256" cy="256" r="175" fill="white"/>
+
+  <!-- Football black pentagons (classic pattern) -->
+  <!-- Center pentagon -->
+  <polygon points="256,160 311,198 289,262 223,262 201,198" fill="#111"/>
+  <!-- Top left -->
+  <polygon points="201,198 141,178 119,112 175,76 223,120" fill="#111" opacity="0.85"/>
+  <!-- Top right -->
+  <polygon points="311,198 371,178 393,112 337,76 289,120" fill="#111" opacity="0.85"/>
+  <!-- Bottom left -->
+  <polygon points="223,262 189,320 129,320 109,258 141,178" fill="#111" opacity="0.85"/>
+  <!-- Bottom right -->
+  <polygon points="289,262 323,320 383,320 403,258 371,178" fill="#111" opacity="0.85"/>
+  <!-- Bottom center -->
+  <polygon points="223,262 256,320 289,262 256,310" fill="#111" opacity="0.7"/>
+
+  <!-- Zenit "Z" letter overlay -->
+  <text x="256" y="290" font-family="Arial Black, sans-serif" font-size="130" font-weight="900"
+        fill="#003DA5" text-anchor="middle" dominant-baseline="middle"
+        stroke="white" stroke-width="8">Z</text>
+
+  <!-- Shine -->
+  <ellipse cx="210" cy="185" rx="45" ry="28" fill="white" opacity="0.25" transform="rotate(-30 210 185)"/>
+</svg>

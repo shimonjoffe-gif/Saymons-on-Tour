@@ -1,0 +1,17 @@
+{
+  "name": "Saymons OnTour",
+  "short_name": "Saymons OnTour",
+  "description": "Менеджер фанатских выездов за Зенит",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#003DA5",
+  "theme_color": "#003DA5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
