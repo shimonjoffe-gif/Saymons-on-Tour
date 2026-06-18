@@ -9,45 +9,47 @@ import api, {
 } from '../api';
 
 // --- типы для формы ---
-interface SplitRow { userId: number; name: string; memberType: MemberType; included: boolean; weight: number; }
+interface SplitRow { userId: number; name: string; familyName: string; memberType: MemberType; included: boolean; weight: number; }
 
 function buildSplits(members: Trip['members'], category: ExpenseCategory): SplitRow[] {
   return members.map(m => {
     const w = defaultWeight(m.user.memberType, category);
-    return { userId: m.userId, name: `${m.user.family.name} ${m.user.firstName}`, memberType: m.user.memberType, included: w > 0, weight: w };
+    return { userId: m.userId, name: m.user.firstName, familyName: m.user.family.name, memberType: m.user.memberType, included: w > 0, weight: w };
   });
 }
 
-// --- Компонент таблицы участников ---
+// --- Компонент таблицы участников (сгруппировано по семьям) ---
 function SplitsEditor({ splits, onChange }: { splits: SplitRow[]; onChange: (s: SplitRow[]) => void }) {
   const toggle = (i: number) => {
-    const next = [...splits];
-    next[i] = { ...next[i]!, included: !next[i]!.included };
-    onChange(next);
+    const next = [...splits]; next[i] = { ...next[i]!, included: !next[i]!.included }; onChange(next);
   };
   const setWeight = (i: number, val: string) => {
-    const next = [...splits];
-    next[i] = { ...next[i]!, weight: parseFloat(val) || 0 };
-    onChange(next);
+    const next = [...splits]; next[i] = { ...next[i]!, weight: parseFloat(val) || 0 }; onChange(next);
   };
+
+  const families = Array.from(new Set(splits.map(s => s.familyName)));
+
   return (
     <div className="splits-editor">
-      {splits.map((s, i) => (
-        <label key={s.userId} className={`split-editor-row ${s.included ? 'included' : 'excluded'}`}>
-          <input type="checkbox" checked={s.included} onChange={() => toggle(i)} />
-          <span className="split-name">{s.name}</span>
-          <span className={`member-badge ${s.memberType.toLowerCase()}`}>
-            {s.memberType === 'ADULT' ? 'взр.' : s.memberType === 'CHILD' ? 'реб.' : 'мл.'}
-          </span>
-          {s.included && (
-            <input
-              type="number" min="0" max="9" step="0.1"
-              value={s.weight}
-              onChange={e => setWeight(i, e.target.value)}
-              className="weight-input"
-            />
-          )}
-        </label>
+      {families.map(family => (
+        <div key={family}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: 1, padding: '6px 2px 4px' }}>
+            Семья {family}
+          </div>
+          {splits.map((s, i) => s.familyName !== family ? null : (
+            <label key={s.userId} className={`split-editor-row ${s.included ? 'included' : 'excluded'}`}>
+              <input type="checkbox" checked={s.included} onChange={() => toggle(i)} />
+              <span className="split-name">{s.name}</span>
+              <span className={`member-badge ${s.memberType.toLowerCase()}`}>
+                {s.memberType === 'ADULT' ? 'взр.' : s.memberType === 'CHILD' ? 'реб.' : 'мл.'}
+              </span>
+              {s.included && (
+                <input type="number" min="0" max="9" step="0.1" value={s.weight}
+                  onChange={e => setWeight(i, e.target.value)} className="weight-input" />
+              )}
+            </label>
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -192,7 +194,8 @@ function ExpenseCard({ expense, allExpenses, tripMembers, onDelete, onUpdated }:
       const ex = existing.find(s => s.userId === m.userId);
       return {
         userId: m.userId,
-        name: `${m.user.family.name} ${m.user.firstName}`,
+        name: m.user.firstName,
+        familyName: m.user.family.name,
         memberType: m.user.memberType,
         included: !!ex,
         weight: ex ? ex.shareWeight : defaultWeight(m.user.memberType, category),
