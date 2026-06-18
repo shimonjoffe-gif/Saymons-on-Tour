@@ -563,6 +563,8 @@ export default function TripPage() {
           {settlement && <SettlementView settlement={settlement} />}
         </section>
       )}
+
+      <Link to="/" className="btn btn-primary btn-full">← Вернуться в календарь</Link>
     </div>
   );
 }
