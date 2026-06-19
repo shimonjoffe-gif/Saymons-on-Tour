@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  format, addMonths, subMonths,
+  format, addMonths, subMonths, addYears, subYears,
   startOfMonth, endOfMonth,
   startOfWeek, endOfWeek,
   eachDayOfInterval, isSameDay, isSameMonth,
@@ -85,6 +85,7 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -225,10 +226,44 @@ export default function CalendarPage() {
       {/* Календарь */}
       <div className="card cal-card">
         <div className="cal-header">
-          <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setSelectedDate(null); }}>‹</button>
-          <span className="cal-month-label">{format(currentMonth, 'LLLL yyyy', { locale: ru })}</span>
-          <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setSelectedDate(null); }}>›</button>
+          <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => subYears(m, 1)); setSelectedDate(null); }} title="Предыдущий год">«</button>
+          <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setSelectedDate(null); }} title="Предыдущий месяц">‹</button>
+          <button className="cal-month-label" onClick={() => setShowMonthPicker(v => !v)}>
+            {format(currentMonth, 'LLLL yyyy', { locale: ru })} {showMonthPicker ? '▲' : '▼'}
+          </button>
+          <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setSelectedDate(null); }} title="Следующий месяц">›</button>
+          <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => addYears(m, 1)); setSelectedDate(null); }} title="Следующий год">»</button>
         </div>
+
+        {showMonthPicker && (
+          <div className="cal-picker">
+            <div className="cal-picker-year">
+              <button className="cal-nav-btn" onClick={() => setCurrentMonth(m => subYears(m, 1))}>«</button>
+              <span>{format(currentMonth, 'yyyy')}</span>
+              <button className="cal-nav-btn" onClick={() => setCurrentMonth(m => addYears(m, 1))}>»</button>
+            </div>
+            <div className="cal-picker-months">
+              {Array.from({ length: 12 }, (_, i) => {
+                const d = new Date(currentMonth.getFullYear(), i, 1);
+                const isSelected = d.getMonth() === currentMonth.getMonth();
+                const hasEvents = events.some(ev => {
+                  const ed = new Date(ev.date);
+                  return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth();
+                });
+                return (
+                  <button
+                    key={i}
+                    className={`cal-picker-month${isSelected ? ' selected' : ''}${hasEvents ? ' has-events' : ''}`}
+                    onClick={() => { setCurrentMonth(d); setSelectedDate(null); setShowMonthPicker(false); }}
+                  >
+                    {format(d, 'MMM', { locale: ru })}
+                    {hasEvents && <span className="cal-picker-dot" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="cal-grid">
           {WEEKDAYS.map(d => <div key={d} className="cal-weekday">{d}</div>)}

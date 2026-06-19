@@ -360,6 +360,8 @@ h3 { font-size: 15px; font-weight: 600; color: var(--text); }
 }
 .cal-month-label {
   font-size: 16px; font-weight: 800; color: var(--text);
+  background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 8px;
+  flex: 1; text-align: center; text-transform: capitalize;
   text-transform: capitalize;
 }
 .cal-nav-btn {
@@ -456,6 +458,27 @@ h3 { font-size: 15px; font-weight: 600; color: var(--text); }
 .cal-legend-dot--match   { background: var(--primary-light);  border: 1.5px solid rgba(0,61,165,0.3); }
 .cal-legend-dot--planned { background: var(--warning-light);  border: 1.5px solid rgba(212,132,10,0.4); }
 .cal-legend-dot--done    { background: var(--success-light);  border: 1.5px solid rgba(26,122,74,0.3); }
+
+/* Month/year picker */
+.cal-picker { padding: 10px 0 4px; border-top: 1px solid var(--border); margin-top: 8px; }
+.cal-picker-year {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 10px;
+}
+.cal-picker-months {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+}
+.cal-picker-month {
+  position: relative; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 8px 4px; font-size: 13px; font-weight: 600;
+  color: var(--text); cursor: pointer; text-align: center; text-transform: capitalize;
+}
+.cal-picker-month.selected { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+.cal-picker-month.has-events { border-color: var(--primary); }
+.cal-picker-dot {
+  position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: 50%; background: var(--primary);
+}
 
 /* ── Day panel ── */
 .day-panel { display: flex; flex-direction: column; gap: 10px; }
