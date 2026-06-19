@@ -3,10 +3,13 @@ import api, { Notification } from '../api';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import ParserSettings from './ParserSettings';
+import CreateMatchModal from './CreateMatchModal';
+import { parseMatchFromText } from '../utils/matchParser';
 
 export default function NotificationsPanel() {
   const [open, setOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [createFrom, setCreateFrom] = useState<Notification | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -61,6 +64,14 @@ export default function NotificationsPanel() {
     setUnread(0);
   }
 
+  function openCreateMatch(notif: Notification, e: React.MouseEvent) {
+    e.stopPropagation();
+    setOpen(false);
+    setCreateFrom(notif);
+    // Mark as read
+    if (!notif.read) markRead(notif.id);
+  }
+
   function openSettings() {
     setOpen(false);
     setShowSettings(true);
@@ -109,17 +120,28 @@ export default function NotificationsPanel() {
                   <div className="notif-item-body">{n.body}</div>
                   <div className="notif-item-meta">
                     <span>{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: ru })}</span>
-                    {n.sourceUrl && (
-                      <a
-                        href={n.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="notif-item-link"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        Открыть →
-                      </a>
-                    )}
+                    <div className="notif-item-actions">
+                      {n.type === 'match' && (
+                        <button
+                          className="notif-create-btn"
+                          onClick={e => openCreateMatch(n, e)}
+                          title="Создать матч из этого сообщения"
+                        >
+                          + матч
+                        </button>
+                      )}
+                      {n.sourceUrl && (
+                        <a
+                          href={n.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="notif-item-link"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          →
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -130,6 +152,15 @@ export default function NotificationsPanel() {
 
       {showSettings && (
         <ParserSettings onClose={() => setShowSettings(false)} />
+      )}
+
+      {createFrom && (
+        <CreateMatchModal
+          initial={parseMatchFromText(createFrom.body, createFrom.source)}
+          notificationText={createFrom.body}
+          onClose={() => setCreateFrom(null)}
+          onCreated={() => setCreateFrom(null)}
+        />
       )}
     </>
   );
