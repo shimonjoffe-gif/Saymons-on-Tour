@@ -234,6 +234,7 @@ export default function CalendarPage() {
           </button>
           <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setSelectedDate(null); }} title="Следующий месяц">›</button>
           <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => addYears(m, 1)); setSelectedDate(null); }} title="Следующий год">»</button>
+          <button className="cal-today-btn" onClick={() => { setCurrentMonth(today); setSelectedDate(null); setShowMonthPicker(false); setPickerYear(null); }}>Сегодня</button>
         </div>
 
         {showMonthPicker && (() => {

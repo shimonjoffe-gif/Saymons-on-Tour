@@ -372,6 +372,11 @@ h3 { font-size: 15px; font-weight: 600; color: var(--text); }
   transition: background 0.15s;
 }
 .cal-nav-btn:hover { background: var(--primary-light); }
+.cal-today-btn {
+  background: var(--primary-light); border: 1.5px solid var(--primary);
+  color: var(--primary); border-radius: 6px; padding: 4px 8px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
 
 .cal-grid {
   display: grid; grid-template-columns: repeat(7, 1fr);
