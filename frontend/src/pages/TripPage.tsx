@@ -466,18 +466,18 @@ export default function TripPage() {
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/" className="back-link">← Все выезды</Link>
-        <Link to="/" className="btn btn-primary btn-sm">Сохранить</Link>
-      </div>
+      <Link to="/" className="back-link">← Все выезды</Link>
 
-      <div className="trip-header">
-        <h1>Зенит — {trip.event.opponent}</h1>
-        <div className="trip-meta">
-          <span>{SPORT_LABELS[trip.event.sportType]}</span>
-          <span>📅 {format(new Date(trip.event.date), 'd MMMM yyyy, HH:mm', { locale: ru })}</span>
-          <span>📍 {trip.event.city}{trip.event.venue ? `, ${trip.event.venue}` : ''}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div className="trip-header" style={{ flex: 1 }}>
+          <h1>Зенит — {trip.event.opponent}</h1>
+          <div className="trip-meta">
+            <span>{SPORT_LABELS[trip.event.sportType]}</span>
+            <span>📅 {format(new Date(trip.event.date), 'd MMMM yyyy, HH:mm', { locale: ru })}</span>
+            <span>📍 {trip.event.city}{trip.event.venue ? `, ${trip.event.venue}` : ''}</span>
+          </div>
         </div>
+        <Link to="/" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Сохранить</Link>
       </div>
 
       {/* Участники */}
