@@ -86,6 +86,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [pickerYear, setPickerYear] = useState<number | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -235,35 +236,56 @@ export default function CalendarPage() {
           <button className="cal-nav-btn" onClick={() => { setCurrentMonth(m => addYears(m, 1)); setSelectedDate(null); }} title="Следующий год">»</button>
         </div>
 
-        {showMonthPicker && (
-          <div className="cal-picker">
-            <div className="cal-picker-year">
-              <button className="cal-nav-btn" onClick={() => setCurrentMonth(m => subYears(m, 1))}>«</button>
-              <span>{format(currentMonth, 'yyyy')}</span>
-              <button className="cal-nav-btn" onClick={() => setCurrentMonth(m => addYears(m, 1))}>»</button>
+        {showMonthPicker && (() => {
+          const curYear = currentMonth.getFullYear();
+          const displayYear = pickerYear ?? curYear;
+          const yearRange = Array.from({ length: 12 }, (_, i) => today.getFullYear() - 8 + i);
+          return (
+            <div className="cal-picker">
+              {/* Сетка годов */}
+              <div className="cal-picker-years">
+                {yearRange.map(y => {
+                  const hasEvents = events.some(ev => new Date(ev.date).getFullYear() === y);
+                  const isActive = y === displayYear;
+                  return (
+                    <button key={y}
+                      className={`cal-picker-year-btn${isActive ? ' selected' : ''}${hasEvents ? ' has-events' : ''}`}
+                      onClick={() => setPickerYear(y)}
+                    >
+                      {y}
+                      {hasEvents && <span className="cal-picker-dot" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Сетка месяцев */}
+              <div className="cal-picker-months">
+                {Array.from({ length: 12 }, (_, i) => {
+                  const d = new Date(displayYear, i, 1);
+                  const isSelected = d.getMonth() === currentMonth.getMonth() && displayYear === curYear;
+                  const hasEvents = events.some(ev => {
+                    const ed = new Date(ev.date);
+                    return ed.getFullYear() === displayYear && ed.getMonth() === i;
+                  });
+                  return (
+                    <button key={i}
+                      className={`cal-picker-month${isSelected ? ' selected' : ''}${hasEvents ? ' has-events' : ''}`}
+                      onClick={() => {
+                        setCurrentMonth(d);
+                        setSelectedDate(null);
+                        setShowMonthPicker(false);
+                        setPickerYear(null);
+                      }}
+                    >
+                      {format(d, 'MMM', { locale: ru })}
+                      {hasEvents && <span className="cal-picker-dot" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="cal-picker-months">
-              {Array.from({ length: 12 }, (_, i) => {
-                const d = new Date(currentMonth.getFullYear(), i, 1);
-                const isSelected = d.getMonth() === currentMonth.getMonth();
-                const hasEvents = events.some(ev => {
-                  const ed = new Date(ev.date);
-                  return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth();
-                });
-                return (
-                  <button
-                    key={i}
-                    className={`cal-picker-month${isSelected ? ' selected' : ''}${hasEvents ? ' has-events' : ''}`}
-                    onClick={() => { setCurrentMonth(d); setSelectedDate(null); setShowMonthPicker(false); }}
-                  >
-                    {format(d, 'MMM', { locale: ru })}
-                    {hasEvents && <span className="cal-picker-dot" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="cal-grid">
           {WEEKDAYS.map(d => <div key={d} className="cal-weekday">{d}</div>)}
